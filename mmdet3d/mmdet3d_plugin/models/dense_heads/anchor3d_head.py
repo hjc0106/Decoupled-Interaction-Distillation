@@ -801,7 +801,7 @@ class DIDAnchor3DHead(Anchor3DHead):
         tea_cls_score = tea_cls_score.permute(0, 2, 3, 1).reshape(B, -1, self.num_classes)  # [B, H*W*NUM_ANCHORS, 10]
         tea_bbox_pred = tea_bbox_pred.permute(0, 2, 3, 1).reshape(-1, NUM_DELTA)  # [B*H*W*NUM_ANCHORS, 9]
 
-        # semantic mask
+        # category mask
         per_anchor = (torch.max(tea_cls_score.sigmoid(), -1).values).reshape(B, -1, NUM_ANCHORS)
         per_pixel = torch.max(per_anchor, -1).values
         ca_mask = per_pixel.reshape(B, H, W)
