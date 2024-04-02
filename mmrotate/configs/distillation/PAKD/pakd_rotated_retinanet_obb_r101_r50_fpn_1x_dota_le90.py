@@ -2,14 +2,15 @@ _base_ = [
     '../../_base_/datasets/dotav1.py', '../../_base_/schedules/schedule_1x.py',
     '../../_base_/default_runtime.py'
 ]
-# 修改runner  runner = dict(type='EpochBasedRunner', max_epochs=12)
 angle_version = 'le90'
-
+# runner
 runner = dict(type="EpochBasedKDRunner", max_epochs=12)
+# teacher cfg
 distiller_cfg = dict(
-    teacher_cfg="configs/distillation/FAKD/rotated_retinanet_obb_r101_fpn_1x_dota_le90.py",
-    teacher_pretrained="teacher_checkpoints/rotated_retinanet_obb_r101_epoch_12.pth",
+    teacher_cfg="configs/distillation/rotated_retinanet_obb_r101_fpn_1x_dota_le90.py",
+    teacher_pretrained="teacher_checkpoints/rotated_retinanet_obb_r101.pth",
 )
+
 model = dict(
     type='PAKDRotatedRetinaNet',
     distillation=dict(

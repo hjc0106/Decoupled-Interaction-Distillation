@@ -7,7 +7,7 @@ angle_version = 'le90'
 runner = dict(type="EpochBasedKDRunner", max_epochs=12)
 # teacher cfg
 distiller_cfg = dict(
-    teacher_cfg="configs/distillation/rotated_retinanet_obb_r50_fpn_1x_dota_le90.py",
+    teacher_cfg="configs/distillation/rotated_retinanet_obb_r101_fpn_1x_dota_le90.py",
     teacher_pretrained="teacher_checkpoints/rotated_retinanet_obb_r101.pth",
 )
 

@@ -12,21 +12,19 @@ distiller_cfg = dict(
 )
 
 model = dict(
-    type='ReviewKDRotatedRetinaNet',
+    type='SPKDRotatedRetinaNet',
     distillation=dict(
-        loss_balance = 1.0,
-        review_cfg=dict(
-            num_layers=5,
-            in_channels = 256,
-            feat_channels = 256,
-            conv_cfg = dict(type="Conv2d"),
-            norm_cfg = dict(type="BN"),
-            act_cfg = dict(type="ReLU"),  
-        )
+        loss_balance = [1.0, 1.0, 1.0],
+        # Align feat dim
+        # in_channels = 256,  # teacher FPN feat_dim
+        # feat_channels = 256,  # student FPN feat_dim
+        # conv_cfg = dict(type="Conv2d"),
+        # norm_cfg = dict(type="BN"),
+        # act_cfg = dict(type="ReLU"),        
     ),
     backbone=dict(
         type='ResNet',
-        depth=50,
+        depth=18,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
@@ -34,10 +32,10 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
         style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet18')),
     neck=dict(
         type='FPN',
-        in_channels=[256, 512, 1024, 2048],
+        in_channels=[64, 128, 256, 512],
         out_channels=256,
         start_level=1,
         add_extra_convs='on_input',

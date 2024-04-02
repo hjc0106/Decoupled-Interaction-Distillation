@@ -12,21 +12,14 @@ distiller_cfg = dict(
 )
 
 model = dict(
-    type='ReviewKDRotatedRetinaNet',
+    type='LogitKDRotatedRetinaNet',
     distillation=dict(
-        loss_balance = 1.0,
-        review_cfg=dict(
-            num_layers=5,
-            in_channels = 256,
-            feat_channels = 256,
-            conv_cfg = dict(type="Conv2d"),
-            norm_cfg = dict(type="BN"),
-            act_cfg = dict(type="ReLU"),  
-        )
+        temperature = 2.0,
+        loss_balance = 0.25,        
     ),
     backbone=dict(
         type='ResNet',
-        depth=50,
+        depth=18,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
@@ -34,16 +27,16 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
         style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet18')),
     neck=dict(
         type='FPN',
-        in_channels=[256, 512, 1024, 2048],
+        in_channels=[64, 128, 256, 512],
         out_channels=256,
         start_level=1,
         add_extra_convs='on_input',
         num_outs=5),
     bbox_head=dict(
-        type='RotatedRetinaHead',
+        type='LogitKDRotatedRetinaHead',
         num_classes=15,
         in_channels=256,
         stacked_convs=4,
@@ -105,8 +98,8 @@ train_pipeline = [
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
+    samples_per_gpu=16,
+    workers_per_gpu=8,
     train=dict(pipeline=train_pipeline, version=angle_version),
     val=dict(version=angle_version),
     test=dict(version=angle_version))

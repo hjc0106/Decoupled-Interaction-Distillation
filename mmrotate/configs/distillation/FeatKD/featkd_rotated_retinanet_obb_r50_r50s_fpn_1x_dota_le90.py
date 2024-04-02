@@ -7,37 +7,38 @@ angle_version = 'le90'
 runner = dict(type="EpochBasedKDRunner", max_epochs=12)
 # teacher cfg
 distiller_cfg = dict(
-    teacher_cfg="configs/distillation/rotated_retinanet_obb_r101_fpn_1x_dota_le90.py",
-    teacher_pretrained="teacher_checkpoints/rotated_retinanet_obb_r101.pth",
+    teacher_cfg="configs/distillation/rotated_retinanet_obb_r50_fpn_1x_dota_le90.py",
+    teacher_pretrained="teacher_checkpoints/rotated_retinanet_obb_r50.pth",
 )
+prunning_ratio = 0.8
 
 model = dict(
-    type='ReviewKDRotatedRetinaNet',
+    type='FeatKDRotatedRetinaNet',
+    # distillation setting
     distillation=dict(
-        loss_balance = 1.0,
-        review_cfg=dict(
-            num_layers=5,
-            in_channels = 256,
-            feat_channels = 256,
-            conv_cfg = dict(type="Conv2d"),
-            norm_cfg = dict(type="BN"),
-            act_cfg = dict(type="ReLU"),  
-        )
+        loss_balance = 0.25,
+        # Align feat dim
+        # in_channels = 256,  # teacher FPN feat_dim
+        # feat_channels = 256,  # student FPN feat_dim
+        # conv_cfg = dict(type="Conv2d"),
+        # norm_cfg = dict(type="BN"),
+        # act_cfg = dict(type="ReLU"),        
     ),
     backbone=dict(
         type='ResNet',
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
+        base_channels = int(64 * prunning_ratio),
         frozen_stages=1,
         zero_init_residual=False,
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
         style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        init_cfg=dict(type='Pretrained', checkpoint='prune_ckpt/resnet50_trimmed.pth')),
     neck=dict(
         type='FPN',
-        in_channels=[256, 512, 1024, 2048],
+        in_channels=[int(64*prunning_ratio)*1*4, int(64*prunning_ratio)*2*4, int(64*prunning_ratio)*4*4, int(64*prunning_ratio)*8*4],
         out_channels=256,
         start_level=1,
         add_extra_convs='on_input',
@@ -104,6 +105,10 @@ train_pipeline = [
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
+
+optimizer = dict(type='SGD', lr=0.0025, momentum=0.9, weight_decay=0.0001)
+# lr=(samples_per_gpu * num_gpu) / 16 * 0.01
+
 data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,
