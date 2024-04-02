@@ -318,7 +318,7 @@ class DIDRotatedRetinaHead(RotatedRetinaHead):
                 anchors: tensor, shape=[B, Hi * Wi * num_anchors, 5] (x1, y1, x2, y2, theta)
                 gt_bbox: list, len=B|shape=[num_gt_bbox_level, 5] (x1, y1, x2, y2, theta)
             Returns:
-                se_mask: tensor, shape=[B, H, W]
+                ca_mask: tensor, shape=[B, H, W]
                 lo_mask: tensor, shape=[B, H, W]
         """
         B, D, H, W = tea_cls_score.shape
@@ -326,11 +326,11 @@ class DIDRotatedRetinaHead(RotatedRetinaHead):
         tea_cls_score = tea_cls_score.permute(0, 2, 3, 1).reshape(B, -1, self.cls_out_channels)  # B, H*W*num_anchor, 15
         tea_bbox_pred = tea_bbox_pred.permute(0, 2, 3, 1).reshape(-1, 5)  # B*H*W*num_anchors, 5
 
-        # semantic mask
+        # category mask
         per_anchor = torch.max(tea_cls_score.sigmoid(), -1).values
         per_anchor = per_anchor.reshape(B, -1, NUM_ANCHORS)
         per_pixel = torch.max(per_anchor, dim=-1).values
-        se_mask = per_pixel.reshape(B, H, W)
+        ca_mask = per_pixel.reshape(B, H, W)
         
         # localization mask
         anchor = anchor.reshape(-1, 5)
@@ -346,18 +346,18 @@ class DIDRotatedRetinaHead(RotatedRetinaHead):
             lo_mask.append(mask_per_batch)
         lo_mask = torch.stack(lo_mask, 0)
 
-        return se_mask, lo_mask
+        return ca_mask, lo_mask
 
-    def se_logit_distillation(self, stu_cls_scores, tea_cls_scores, se_mask, label_weight, avg_factor):
+    def ca_logit_distillation(self, stu_cls_scores, tea_cls_scores, ca_mask, label_weight, avg_factor):
         """
             Args:
                 stu_cls_scores: tensor, shape=[-1, num_classes]
                 tea_cls_scores: tensor, shape=[-1, num_classes]
             Returns:
-                Selogitkd loss: tensor
+                Calogitkd loss: tensor
         """
-        stu_cls_scores = (se_mask[:, None, :, :] * stu_cls_scores).permute(0, 2, 3, 1).reshape(-1, self.cls_out_channels)
-        tea_cls_scores = (se_mask[:, None, :, :] * tea_cls_scores).permute(0, 2, 3, 1).reshape(-1, self.cls_out_channels)
+        stu_cls_scores = (ca_mask[:, None, :, :] * stu_cls_scores).permute(0, 2, 3, 1).reshape(-1, self.cls_out_channels)
+        tea_cls_scores = (ca_mask[:, None, :, :] * tea_cls_scores).permute(0, 2, 3, 1).reshape(-1, self.cls_out_channels)
         stu_cls_scores = F.log_softmax(stu_cls_scores / self.T, dim=1)
         tea_cls_scores = F.softmax(tea_cls_scores / self.T, dim=1)
         loss = F.kl_div(stu_cls_scores, tea_cls_scores, reduction="none") * (self.T ** 2)
@@ -365,24 +365,24 @@ class DIDRotatedRetinaHead(RotatedRetinaHead):
         
         return loss
     
-    def se_lo_feat_distillation(self, stu_feats, tea_feats, se_mask, lo_mask):
+    def ca_lo_feat_distillation(self, stu_feats, tea_feats, ca_mask, lo_mask):
         """
             Args: 
                 stu_feats: tensor, shape=[B, C, Hi, Wi]
                 tea_feats: tensor, shape=[B, C, Hi, Wi]
-                se_mask: tensor, shape=[B, Hi, Wi]
+                ca_mask: tensor, shape=[B, Hi, Wi]
                 lo_mask: tensor, shape=[B, Hi, Wi]
             Returns:
-                Sefeatloss + Lofeatloss          
+                Cafeatloss + Lofeatloss          
         """
         # l1 loss
         original_kd = torch.abs(stu_feats - tea_feats)
         # semantic featkd 引入平滑因子
-        se_loss = (original_kd * se_mask[:, None, :, :]).sum() / (se_mask.sum() * (self.factor**2))
+        ca_loss = (original_kd * ca_mask[:, None, :, :]).sum() / (ca_mask.sum() * (self.factor**2))
         # localizalization featkd
         lo_loss = (original_kd * lo_mask[:, None, :, :]).sum() / (lo_mask.sum() * (self.factor**2)) 
 
-        return lo_loss + se_loss   
+        return lo_loss + ca_loss   
         
     def loss_single(self, cls_score, bbox_pred, stu_feats, tea_feats, tea_cls_score, tea_bbox_pred, anchors, gt_bboxes, labels, label_weights,
                     bbox_targets, bbox_weights, num_total_samples):
@@ -426,10 +426,10 @@ class DIDRotatedRetinaHead(RotatedRetinaHead):
 
         # Knowledege Decoupled
         with torch.no_grad():
-            se_mask, lo_mask = self.get_knowledge_decouple_mask(tea_cls_score, tea_bbox_pred, anchors, gt_bboxes)
+            ca_mask, lo_mask = self.get_knowledge_decouple_mask(tea_cls_score, tea_bbox_pred, anchors, gt_bboxes)
         
         # SeLogitKD of Semantic Distillation 
-        loss_logitkd = self.se_logit_distillation(cls_score, tea_cls_score, se_mask, label_weights, avg_factor=num_total_samples)
+        loss_logitkd = self.ca_logit_distillation(cls_score, tea_cls_score, ca_mask, label_weights, avg_factor=num_total_samples)
         loss_logitkd = self.loss_balance[0] * loss_logitkd
         
         # classification loss
@@ -452,7 +452,7 @@ class DIDRotatedRetinaHead(RotatedRetinaHead):
             avg_factor=num_total_samples)
         
         # SeFeatKD of Semantic Distillation & LoFeatKD of Localization Distillation
-        loss_featkd = self.se_lo_feat_distillation(stu_feats, tea_feats, se_mask, lo_mask)
+        loss_featkd = self.ca_lo_feat_distillation(stu_feats, tea_feats, ca_mask, lo_mask)
         loss_featkd = self.loss_balance[1] * loss_featkd
         
         return loss_cls, loss_bbox, loss_logitkd, loss_featkd
