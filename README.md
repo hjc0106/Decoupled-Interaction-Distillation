@@ -36,10 +36,10 @@ bash ./tools/dist_train_kd.sh <distillation_cfg> 8
 
 Many thanks to following codes that help us a lot in building this codebase:
 
-- PointDistiller
-- mmdetection
-- mmrotate
-- mmdetection3d
+- [PointDistiller](https://github.com/RunpeiDong/PointDistiller)
+- [mmdetection](https://github.com/open-mmlab/mmdetection)
+- [mmrotate](https://github.com/open-mmlab/mmrotate)
+- [mmdetection3d](https://github.com/open-mmlab/mmdetection3d)
 
 # Citation
 
