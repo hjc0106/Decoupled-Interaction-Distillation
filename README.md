@@ -1,5 +1,5 @@
 # Decoupled Interaction Distillation
-
+![framework.png](./framework.png)
 # Environment
 
 This codebase was tested with the following environment configurations. It may work with other versions.
