@@ -4,7 +4,7 @@
 
 ## 1: Install mmrotate
 
-Install mmrotate based instruction.
+Install mmrotate based [instruction](https://github.com/open-mmlab/mmrotate/blob/main/docs/en/get_started.md).
 
 - torch==1.13.0+cu117
 - torchvision==0.14.0+cu117
@@ -38,7 +38,7 @@ Put it in teacher_checkpoints. You need to create this folder by yourself.
 
 ## 1: Install mmdetection3d
 
-Install mmdetection3d based instruction.
+Install mmdetection3d based [instruction](https://github.com/open-mmlab/mmdetection3d/blob/1.0/docs/en/getting_started.md).
 
 - torch==1.13.0+cu117
 - torchvision==0.14.0+cu117
