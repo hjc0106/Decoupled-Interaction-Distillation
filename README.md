@@ -1,4 +1,4 @@
-# Decoupled Interaction Distillation
+<center>Decoupled Interaction Distillation<center>
 ![framework.png](./framework.png)
 # Environment
 
