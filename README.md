@@ -14,7 +14,7 @@ This codebase was tested with the following environment configurations. It may w
 - MMDetection3d 1.0.0rc3
 
 # Installation
-
+Please refer to [getting_started.md](./getting_started.md) for installation.
 # Datasets
 
 # Run
