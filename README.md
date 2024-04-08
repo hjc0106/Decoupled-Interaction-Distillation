@@ -15,6 +15,36 @@ This codebase was tested with the following environment configurations. It may w
 
 # Installation
 Please refer to [getting_started.md](./getting_started.md) for installation.
+
 # Datasets
 
+We use [DOTAv1.0](https://captain-whu.github.io/DOTA/dataset.html) and [nuScenes](https://www.nuscenes.org/) datasets, please follow the official instructions for set up ([DOTA instruction](https://github.com/open-mmlab/mmrotate/blob/main/tools/data/dota/README.md), [nuScenes instruction](https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/nuscenes.html)).
+
 # Run
+
+Please make sure you have set up the environments and you can start knowledge distillation by running
+
+```python
+DEVICE_ID = {gpu_id}
+# for single gpu
+CUDA_VISIBLE_DEVICES=$DEVICE_ID python tools/train_kd.py {distillation_cfg}
+# for multiple gpus
+bash ./tools/dist_train_kd.sh <distillation_cfg> 8 
+```
+
+# Acknowledgements
+
+Many thanks to following codes that help us a lot in building this codebase:
+
+- PointDistiller
+- mmdetection
+- mmrotate
+- mmdetection3d
+
+# Citation
+
+If you find our work useful in your research, please consider citing:
+
+```python
+To be continued
+```
