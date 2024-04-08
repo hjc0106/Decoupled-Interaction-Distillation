@@ -4,7 +4,7 @@
 
 ## 1: Install mmrotate
 
-Install mmrotate based [instruction](https://mmrotate.readthedocs.io/en/v0.3.4/install.html).
+Install mmrotate based [instruction](https://github.com/open-mmlab/mmdetection3d/blob/1.0/docs/en/getting_started.md).
 
 - torch==1.13.0+cu117
 - torchvision==0.14.0+cu117
