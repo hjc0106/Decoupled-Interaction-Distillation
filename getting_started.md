@@ -1,5 +1,3 @@
-# Untitled
-
 # DID based on MMRotate
 
 ## 1: Install mmrotate
