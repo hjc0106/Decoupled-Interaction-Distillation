@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+import torch.nn as nn
 from torch.nn import functional as F
 
 from mmcv.runner import force_fp32
@@ -124,9 +125,9 @@ class DIDMVXFasterRCNN(MVXTwoStageDetector):
                  pretrained=None,
                  init_cfg=None):
         # update bbox_head
-        bbox_head["loss_balance"] = distillation["loss_balance"]
-        bbox_head["temperature"] = distillation["temperature"]
-        bbox_head["factor"] = distillation["factor"]
+        pts_bbox_head["loss_balance"] = distillation["loss_balance"]
+        pts_bbox_head["temperature"] = distillation["temperature"]
+        pts_bbox_head["factor"] = distillation["factor"]
         # detector init                 
         super(DIDMVXFasterRCNN, self).__init__(**kwargs)
         self.distillation = distillation
@@ -297,7 +298,7 @@ class DIDMVXFasterRCNN(MVXTwoStageDetector):
         with torch.no_grad():
             teacher = teacher.to(points[0].device)
             tea_pts_feats, tea_pts_infos = teacher.extract_feat(points, img=img, img_metas=img_metas)
-            tea_cls_scores, tea_bbox_preds = teacher.pts_bbox_head(teacher_pts_feats)[:2]
+            tea_cls_scores, tea_bbox_preds = teacher.pts_bbox_head(tea_pts_feats)[:2]
         img_feats, pts_feats = self.extract_feat(points, img=img, img_metas=img_metas)
         
         # multi-layers feature interaction
